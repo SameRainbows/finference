@@ -4,6 +4,12 @@
 
 Finference
 
+## Links
+
+- Live product: https://finference-ai.vercel.app
+- Demo video: https://finference-ai.vercel.app/demo
+- Public repository: https://github.com/SameRainbows/finference
+
 ## Tagline
 
 The AI margin control plane—observe, optimize, govern, and bill every inference.
@@ -82,4 +88,3 @@ quality constraint, not simply the cheapest token.
 
 next.js, react, typescript, tailwind-css, recharts, zod, backboard, stripe,
 vercel, vitest
-

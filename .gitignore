@@ -39,6 +39,11 @@ yarn-error.log*
 
 # local QA artifacts
 /output
+/submission/raw-video
+/submission/frames
+/submission/*.wav
+/submission/*.mp4
+/submission/*.jpg
 
 # typescript
 *.tsbuildinfo

@@ -65,6 +65,9 @@ export default function Home() {
             <Link className="transition hover:text-white" href="/security">
               Security
             </Link>
+            <Link className="transition hover:text-white" href="/demo">
+              Demo
+            </Link>
             <Link className="transition hover:text-white" href="/pricing">
               Pricing
             </Link>
@@ -554,6 +557,9 @@ export default function Home() {
             <Link href="/pricing" className="hover:text-white/60">
               Pricing
             </Link>
+            <Link href="/demo" className="hover:text-white/60">
+              Demo
+            </Link>
             <a
               href="https://github.com/SameRainbows/finference"
               className="hover:text-white/60"
@@ -566,4 +572,3 @@ export default function Home() {
     </main>
   );
 }
-

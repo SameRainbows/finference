@@ -7,6 +7,7 @@ turns AI usage into billable units with a complete audit trail.
 Built as original work for **Galuxium Nexus V2 (2026)**.
 
 [Live demo](https://finference-ai.vercel.app) ·
+[Demo video](https://finference-ai.vercel.app/demo) ·
 [Architecture](docs/ARCHITECTURE.md) ·
 [Security model](docs/SECURITY.md) ·
 [Devpost submission](docs/DEVPOST.md)

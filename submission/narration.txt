@@ -1,0 +1,24 @@
+AI SaaS teams see revenue immediately, but inference costs arrive weeks later in a blended provider invoice. Growth can quietly destroy gross margin.
+
+Finference is the AI margin control plane. It converts every model request into an economic event that joins cost, revenue, tokens, latency, feature, and customer in one auditable ledger.
+
+This workspace has twenty-eight thousand five hundred dollars in AI revenue, but inference cost is growing faster. Gross margin has fallen to fifty-two percent, below the company’s sixty percent target.
+
+Finference exposes unit economics at every useful level: model route, feature, customer, and workspace. It also converts the same authoritative events into transparent, usage-based billing.
+
+The margin agent found that most support turns are low complexity. It proposes moving seventy-two percent of eligible traffic to a more efficient model while preserving the premium route for escalations and long-context requests.
+
+This agent uses Backboard persistent memory. It remembers Aurora’s accepted quality floors, customer service levels, prior rollbacks, and operator preferences across optimization cycles. It is not a stateless API wrapper.
+
+Before anything changes, Finference replays historical traffic. Semantic quality remains above the ninety-four percent floor, latency improves, escalation precision is preserved, and the projected savings are two thousand eight hundred sixty-four dollars per month.
+
+Automation is governed, explainable, and reversible. The policy has a bounded traffic share, a human approver, immutable evidence, and automatic rollback if quality, latency, or provider reliability regresses.
+
+After approval, eligible traffic is rerouted. Inference cost falls to fourteen thousand two hundred ninety dollars, gross margin rises to sixty-one point eight percent, and the audit trail records the decision.
+
+Finference uses signed, idempotent ingestion, tenant-scoped architecture, minimal data collection, and server-side secret management. Prompt and completion content are not required.
+
+The product is itself a monetizable SaaS, with tiered subscriptions and Stripe Checkout and billing adapters.
+
+Finference lets AI products observe, optimize, govern, and bill every inference, so growth improves margin instead of quietly destroying it.
+

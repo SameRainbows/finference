@@ -14,6 +14,9 @@ export function SiteHeader() {
           <Link href="/security" className="hover:text-white/70">
             Security
           </Link>
+          <Link href="/demo" className="hover:text-white/70">
+            Demo video
+          </Link>
           <Link href="/pricing" className="hover:text-white/70">
             Pricing
           </Link>
@@ -29,4 +32,3 @@ export function SiteHeader() {
     </header>
   );
 }
-
