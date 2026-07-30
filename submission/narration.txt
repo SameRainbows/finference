@@ -1,24 +1,24 @@
-AI SaaS teams see revenue immediately, but inference costs arrive weeks later in a blended provider invoice. Growth can quietly destroy gross margin.
+AI software can grow while its margins quietly collapse. Revenue is visible immediately. Inference cost arrives later, blended across providers and disconnected from the customer and feature that created it.
 
-Finference is the AI margin control plane. It converts every model request into an economic event that joins cost, revenue, tokens, latency, feature, and customer in one auditable ledger.
+Finference is an interactive AI margin control plane. It turns every model request into an economic event joining cost, revenue, tokens, latency, feature, model, and customer in one auditable ledger.
 
-This workspace has twenty-eight thousand five hundred dollars in AI revenue, but inference cost is growing faster. Gross margin has fallen to fifty-two percent, below the company’s sixty percent target.
+This production-shaped demo has twenty-eight thousand five hundred dollars in AI revenue. But model cost is growing too fast, and gross margin has fallen to fifty-two percent—below the company’s sixty-percent target.
 
-Finference exposes unit economics at every useful level: model route, feature, customer, and workspace. It also converts the same authoritative events into transparent, usage-based billing.
+The working dashboard exposes unit economics by route, model, feature, and customer. Its signed ingestion endpoint validates events and handles retries idempotently. The same event model is designed to drive transparent usage billing.
 
-The margin agent found that most support turns are low complexity. It proposes moving seventy-two percent of eligible traffic to a more efficient model while preserving the premium route for escalations and long-context requests.
+The margin agent has found a specific leak. Most support turns are low complexity. It proposes routing seventy-two percent of eligible traffic to a more efficient model, while preserving the premium route for escalations.
 
-This agent uses Backboard persistent memory. It remembers Aurora’s accepted quality floors, customer service levels, prior rollbacks, and operator preferences across optimization cycles. It is not a stateless API wrapper.
+For credential-free judging, the public deployment uses a deterministic agent fallback. The included Backboard adapter can switch to live persistent memory when configured—remembering quality floors, service-level exceptions, previous rollbacks, and operator preferences.
 
-Before anything changes, Finference replays historical traffic. Semantic quality remains above the ninety-four percent floor, latency improves, escalation precision is preserved, and the projected savings are two thousand eight hundred sixty-four dollars per month.
+Before anything changes, Finference replays historical traffic. Semantic quality remains above the ninety-four-percent floor. Latency improves. Escalation precision is preserved. Projected savings are two thousand eight hundred sixty-four dollars per month.
 
-Automation is governed, explainable, and reversible. The policy has a bounded traffic share, a human approver, immutable evidence, and automatic rollback if quality, latency, or provider reliability regresses.
+The decision is explainable and reversible, with a bounded traffic share, evidence, a human approval gate, and automatic rollback if quality, latency, or provider reliability regresses.
 
-After approval, eligible traffic is rerouted. Inference cost falls to fourteen thousand two hundred ninety dollars, gross margin rises to sixty-one point eight percent, and the audit trail records the decision.
+Approve the recommendation, and the control plane updates immediately. Inference cost falls to fourteen thousand two hundred ninety dollars. Gross margin rises to sixty-one point eight percent. Model economics change, and the approval enters the audit trail.
 
-Finference uses signed, idempotent ingestion, tenant-scoped architecture, minimal data collection, and server-side secret management. Prompt and completion content are not required.
+Finference is more than a concept page: the workflow, simulation engine, financial calculations, API boundaries, tests, and deployment are functional. It is an honest vertical slice—not yet a multi-tenant production service. Persistent storage, authentication, live traffic, and external billing credentials are the next operational layer.
 
-The product is itself a monetizable SaaS, with tiered subscriptions and Stripe Checkout and billing adapters.
+The product already includes a Stripe Checkout adapter, tiered subscriptions, security controls, continuous integration, and a documented scale-out architecture.
 
-Finference lets AI products observe, optimize, govern, and bill every inference, so growth improves margin instead of quietly destroying it.
+Finference gives AI teams a governed path from raw token usage to protected revenue—so growth improves margin instead of quietly destroying it.
 

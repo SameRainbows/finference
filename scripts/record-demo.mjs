@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const outputDir = path.resolve("submission/raw-video");
+const baseUrl = process.env.DEMO_BASE_URL ?? "https://finference-ai.vercel.app";
 await mkdir(outputDir, { recursive: true });
 
 const browser = await chromium.launch({
@@ -65,7 +66,7 @@ async function smoothScroll(y, duration = 1800) {
   );
 }
 
-await page.goto("https://finference-ai.vercel.app", {
+await page.goto(baseUrl, {
   waitUntil: "networkidle",
 });
 await caption(
@@ -88,7 +89,7 @@ await caption(
 );
 await page.waitForTimeout(9000);
 
-await page.goto("https://finference-ai.vercel.app/dashboard", {
+await page.goto(`${baseUrl}/dashboard`, {
   waitUntil: "networkidle",
 });
 await caption(
@@ -109,8 +110,8 @@ await page.waitForTimeout(7000);
 await smoothScroll(0, 900);
 await page.getByText("View margin analysis").click();
 await caption(
-  "Persistent-memory margin agent",
-  "Backboard memory carries forward Aurora's accepted quality floors, customer SLAs, past rollbacks, and operator preferences.",
+  "Integration-ready margin agent",
+  "The public build uses deterministic demo memory; the included Backboard adapter activates persistent memory when credentials are configured.",
 );
 await page.waitForTimeout(9000);
 
@@ -156,7 +157,7 @@ await caption(
 );
 await page.waitForTimeout(8500);
 
-await page.goto("https://finference-ai.vercel.app/security", {
+await page.goto(`${baseUrl}/security`, {
   waitUntil: "networkidle",
 });
 await caption(
@@ -165,7 +166,7 @@ await caption(
 );
 await page.waitForTimeout(8000);
 
-await page.goto("https://finference-ai.vercel.app/pricing", {
+await page.goto(`${baseUrl}/pricing`, {
   waitUntil: "networkidle",
 });
 await caption(
@@ -174,7 +175,7 @@ await caption(
 );
 await page.waitForTimeout(7500);
 
-await page.goto("https://finference-ai.vercel.app", {
+await page.goto(baseUrl, {
   waitUntil: "networkidle",
 });
 await caption(

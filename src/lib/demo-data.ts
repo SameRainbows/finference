@@ -142,10 +142,9 @@ export const auditEvents = [
   },
   {
     time: "13:40:02",
-    actor: "Backboard memory",
-    action: "Learned quality preference",
+    actor: "Demo memory adapter",
+    action: "Loaded quality preference",
     target: "Northstar workspace",
     status: "verified",
   },
 ];
-

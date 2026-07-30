@@ -20,10 +20,17 @@ by Git.
 
 ## Narration
 
-The final narration is in `narration.txt`. The published video uses an offline
-system voice so the demo remains reproducible without an external TTS account.
+The final narration is in `narration.txt`. The published video uses Google
+Gemini TTS through `scripts/generate-gemini-narration.mjs`.
+
+```bash
+$env:GEMINI_API_KEY="your-key" # PowerShell
+node scripts/generate-gemini-narration.mjs
+```
+
+The API key is read only from the process environment and is never written to
+the repository.
 
 To rebuild the final MP4, combine the largest raw WebM with the narration audio
 using the `ffmpeg-static` binary and H.264/AAC output. The committed result is
 optimized for web streaming with the MP4 `faststart` flag.
-

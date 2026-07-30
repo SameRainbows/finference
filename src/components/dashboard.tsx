@@ -248,9 +248,11 @@ export function Dashboard() {
               <div>
                 <div className="text-sm font-medium">{activeNav}</div>
                 <div className="mt-0.5 hidden items-center gap-1.5 text-[10px] text-white/27 sm:flex">
-                  Production
+                  Interactive demo
                   <span>·</span>
-                  <span className="text-[#c9ff3f]">all systems operational</span>
+                  <span className="text-[#c9ff3f]">
+                    seeded dataset · APIs available
+                  </span>
                 </div>
               </div>
             </div>
@@ -773,7 +775,7 @@ export function Dashboard() {
                   <div className="text-sm font-medium">Margin agent</div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-white/28">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#c9ff3f]" />
-                    Backboard memory active
+                    Backboard adapter · demo memory
                   </div>
                 </div>
               </div>
@@ -914,10 +916,10 @@ export function Dashboard() {
                   Why this recommendation
                 </div>
                 <p className="mt-3 text-[10px] leading-5 text-white/36">
-                  Based on 30 days of traffic, 72% of support turns use less than
-                  8k context and require no tools. This matches two previously
-                  approved Aurora routing decisions stored in persistent
-                  memory. High-risk cohorts remain untouched.
+                  Based on 30 days of seeded traffic, 72% of support turns use
+                  less than 8k context and require no tools. The live Backboard
+                  adapter can persist accepted decisions when credentials are
+                  configured. High-risk cohorts remain untouched.
                 </p>
                 <div className="mt-3 font-mono text-[8px] text-white/20">
                   memory://aurora/quality-preferences · thread 7b3f

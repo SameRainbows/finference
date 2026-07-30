@@ -26,7 +26,7 @@ export default function DemoPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-white/34">
             <Clock3 className="h-4 w-4" />
-            2 minutes 28 seconds
+            2 minutes 29 seconds
           </div>
         </div>
 

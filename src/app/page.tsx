@@ -121,11 +121,11 @@ export default function Home() {
                   <span className="h-2.5 w-2.5 rounded-full bg-[#72d572]/80" />
                 </div>
                 <div className="font-mono text-[10px] tracking-[0.18em] text-white/28">
-                  AURORA / PRODUCTION
+                  AURORA / INTERACTIVE DEMO
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-[#c9ff3f]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#c9ff3f]" />
-                  LIVE
+                  SEEDED DATA
                 </div>
               </div>
               <div className="grid min-h-[520px] grid-cols-1 lg:grid-cols-[190px_1fr]">
@@ -152,11 +152,11 @@ export default function Home() {
                     </div>
                     <div className="mt-2 flex items-center gap-2 text-[11px] text-white/66">
                       <MemoryStick className="h-3.5 w-3.5 text-[#c9ff3f]" />
-                      Backboard memory
+                      Backboard-ready agent
                     </div>
                     <div className="mt-2 flex items-center gap-2 text-[11px] text-white/66">
                       <CircleDollarSign className="h-3.5 w-3.5 text-[#55e8cf]" />
-                      Stripe metering
+                      Stripe-ready billing
                     </div>
                   </div>
                 </div>
@@ -435,9 +435,9 @@ export default function Home() {
                 Persistent decision memory
               </div>
               <p className="mt-5 text-sm leading-6 text-white/45">
-                Built for Backboard memory. The agent remembers accepted quality
-                thresholds, customer SLAs, past rollbacks, and operator
-                preferences across optimization cycles.
+                The included adapter activates Backboard persistent memory when
+                credentials are configured. The public demo uses deterministic
+                memory so judges can test it without an account.
               </p>
               <div className="mt-7 flex items-center gap-2 text-xs text-[#d7ff70]">
                 <BadgeCheck className="h-4 w-4" />
