@@ -1,6 +1,6 @@
 # Demo production
 
-The published 2:28 product keynote is available at:
+The published 3:07 product keynote is available at:
 
 - `https://finference-ai.vercel.app/demo`
 - `public/finference-demo.mp4`
@@ -20,8 +20,9 @@ by Git.
 
 ## Narration
 
-The final narration is in `narration.txt`. The published video uses Google
-Gemini TTS through `scripts/generate-gemini-narration.mjs`.
+The final narration is in `narration.txt`. The repository supports Google
+Gemini TTS through `scripts/generate-gemini-narration.mjs`; the published
+recording uses a neutral neural voice.
 
 ```bash
 $env:GEMINI_API_KEY="your-key" # PowerShell

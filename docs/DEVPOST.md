@@ -80,7 +80,8 @@ not server memory, resolves concurrent duplicates.
 
 The hosted app persists real auth sessions, policies, audit entries, API-key
 digests, usage events, rate-limit counts, and meter batches. A verified
-100-request / concurrency-20 run persisted all 100 events with zero failures.
+production 100-request / concurrency-20 run persisted all 100 events with zero
+failures at 45.97 requests/second, with 223.9 ms p50 and 1,199.2 ms p95 latency.
 The documented scale path introduces a partitioned event stream and ClickHouse
 analytics while retaining Postgres as the billing authority.
 

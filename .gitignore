@@ -46,6 +46,7 @@ yarn-error.log*
 /submission/raw-video
 /submission/frames
 /submission/*.wav
+/submission/*.mp3
 /submission/*.mp4
 /submission/*.jpg
 

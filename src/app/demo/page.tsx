@@ -26,7 +26,7 @@ export default function DemoPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-white/34">
             <Clock3 className="h-4 w-4" />
-            2 minutes 29 seconds
+            3 minutes 7 seconds
           </div>
         </div>
 
@@ -46,18 +46,17 @@ export default function DemoPage() {
           <div className="rounded-xl border border-white/8 bg-[#0c1013] p-5">
             <h2 className="text-sm font-medium">What the demo proves</h2>
             <p className="mt-2 max-w-3xl text-xs leading-5 text-white/38">
-              End-to-end economic telemetry, a persistent-memory Backboard
-              agent, offline quality simulation, human approval, automatic
-              rollback rules, live state changes, immutable evidence, and
-              Stripe-ready metering.
+              Real Neon Auth and Postgres persistence, revenue-aware telemetry,
+              governed policy activation, one-time API-key handling, durable
+              event ingestion, audit evidence, and replay-safe billing meters.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
             <Link
-              href="/dashboard"
+              href="/auth/sign-in"
               className="flex h-11 items-center justify-center gap-2 rounded-lg bg-[#c9ff3f] px-5 text-xs font-semibold text-[#10130e]"
             >
-              Try the live workflow
+              Enter persistent workspace
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <a

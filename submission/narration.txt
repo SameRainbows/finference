@@ -1,24 +1,21 @@
-AI software can grow while its margins quietly collapse. Revenue is visible immediately. Inference cost arrives later, blended across providers and disconnected from the customer and feature that created it.
+AI software can grow while its margins quietly collapse. Revenue is visible immediately, while inference cost arrives later in a blended provider invoice. Finference is the AI margin control plane that connects every request to customer revenue, governs safer routing decisions, and converts the same ledger into billable usage.
 
-Finference is an interactive AI margin control plane. It turns every model request into an economic event joining cost, revenue, tokens, latency, feature, model, and customer in one auditable ledger.
+This is not a static concept page. The judge path creates a real Neon Auth session and opens Aurora Labs, a tenant-isolated workspace backed by live Neon Postgres. Policies, audit evidence, API-key digests, events, rate-limit counts, and meter batches survive reloads and deployments.
 
-This production-shaped demo has twenty-eight thousand five hundred dollars in AI revenue. But model cost is growing too fast, and gross margin has fallen to fifty-two percent—below the company’s sixty-percent target.
+Aurora has twenty-eight thousand five hundred dollars in AI revenue and thirteen thousand seven hundred fifty-one dollars in inference cost. That is a 51.8-percent gross margin, below the company's 60-percent target. Finference attributes the gap to specific model routes rather than hiding it inside a provider total.
 
-The working dashboard exposes unit economics by route, model, feature, and customer. Its signed ingestion endpoint validates events and handles retries idempotently. The same event model is designed to drive transparent usage billing.
+The margin agent proposes moving seventy-two percent of low-complexity support traffic to a more efficient model, while premium handling remains in place for escalations and risky cohorts. Before activation, Finference replays ninety-six thousand two hundred twenty-one historical requests. Semantic quality remains at 94.8 percent, latency improves, and escalation precision is preserved.
 
-The margin agent has found a specific leak. Most support turns are low complexity. It proposes routing seventy-two percent of eligible traffic to a more efficient model, while preserving the premium route for escalations.
+The decision is bounded and reversible. Only a workspace owner or administrator can activate the atomic proposed-to-active transition. Quality must remain above 94 percent, P95 latency below fifteen hundred milliseconds, and provider errors below two percent.
 
-For credential-free judging, the public deployment uses a deterministic agent fallback. The included Backboard adapter can switch to live persistent memory when configured—remembering quality floors, service-level exceptions, previous rollbacks, and operator preferences.
+After approval, Finference writes the actor, policy scope, traffic share, evidence, and rollback predicates to Postgres. Reloading proves the state is durable. Protected cost falls to ten thousand eight hundred eighty-seven dollars, gross profit reaches seventeen thousand six hundred thirteen dollars, and gross margin rises to 61.8 percent.
 
-Before anything changes, Finference replays historical traffic. Semantic quality remains above the ninety-four-percent floor. Latency improves. Escalation precision is preserved. Projected savings are two thousand eight hundred sixty-four dollars per month.
+Operators can create a workspace ingestion key. The plaintext appears once; only its SHA-256 digest, prefix, tenant, and revocation state are stored. A test request then passes strict schema validation, persistent rate limiting, tenant authentication, and database idempotency before joining the authoritative economic ledger.
 
-The decision is explainable and reversible, with a bounded traffic share, evidence, a human approval gate, and automatic rollback if quality, latency, or provider reliability regresses.
+The same ledger powers billing. New events are aggregated into economic units under a deterministic source watermark. The meter batch remains durable if Stripe is unavailable, and the flush identifier becomes the replay-safe Stripe meter-event identifier when credentials are installed.
 
-Approve the recommendation, and the control plane updates immediately. Inference cost falls to fourteen thousand two hundred ninety dollars. Gross margin rises to sixty-one point eight percent. Model economics change, and the approval enters the audit trail.
+The governance feed shows the real approval and API-key actions created by this authenticated workflow. Across the product, tenant isolation, HMAC verification, human approval, minimal data collection, and replay-safe webhooks are first-class.
 
-Finference is more than a concept page: the workflow, simulation engine, financial calculations, API boundaries, tests, and deployment are functional. It is an honest vertical slice—not yet a multi-tenant production service. Persistent storage, authentication, live traffic, and external billing credentials are the next operational layer.
+Finference is designed as a recurring-revenue SaaS with tiered subscriptions and usage-based economic units. Neon database and authentication are live today. The repository also implements Backboard workspace threads with persistent memory and Stripe Checkout, Billing Meters, signed webhooks, and provisioning. Those external adapters are reported honestly as adapter-ready until account credentials are installed.
 
-The product already includes a Stripe Checkout adapter, tiered subscriptions, security controls, continuous integration, and a documented scale-out architecture.
-
-Finference gives AI teams a governed path from raw token usage to protected revenue—so growth improves margin instead of quietly destroying it.
-
+Finference turns delayed AI cost into a governed, revenue-aware operating loop: observe, optimize, approve, and bill—so AI growth improves margin instead of quietly destroying it.

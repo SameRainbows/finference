@@ -22,6 +22,24 @@ Default parameters:
 - concurrency 20
 - 120 requests/minute per API key
 
+## Production Vercel result
+
+Verified on July 31, 2026 against
+`https://finference-ai.vercel.app`:
+
+| Result | Value |
+| --- | ---: |
+| Requests | 100 |
+| Concurrency | 20 |
+| Successful | 100 |
+| Persisted | 100 |
+| Failed | 0 |
+| Throughput | 45.97 requests/second |
+| p50 | 223.9 ms |
+| p95 | 1,199.2 ms |
+| p99 | 1,252.8 ms |
+| Maximum | 1,287.7 ms |
+
 ## Local-to-Neon baseline
 
 Verified on July 31, 2026 against the live Neon database through the local
@@ -38,5 +56,5 @@ Next.js server:
 | p95 | 1,720.9 ms |
 | p99 | 1,737.5 ms |
 
-This is a bounded hackathon verification, not a claim of maximum system
-capacity. Production Vercel results are recorded after each release.
+These are bounded hackathon verifications, not claims of maximum system
+capacity. Synthetic rows were removed after both runs.
