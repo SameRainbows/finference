@@ -2,117 +2,140 @@
 
 ## System goals
 
-Finference is designed for high-cardinality AI usage telemetry where financial
-correctness, tenant isolation, and safe automation matter more than raw prompt
-observability.
+Finference is a tenant-isolated control plane for AI unit economics. Financial
+correctness and governed automation take priority over prompt observability.
 
 Primary invariants:
 
 1. One provider request creates at most one billable economic event.
-2. Raw events are append-only; corrections are compensating entries.
-3. Every materialized metric can be traced to source event IDs.
-4. No routing policy reaches production without evidence and an approver.
-5. Every automated policy has a bounded scope and rollback predicate.
+2. API secrets are never stored in plaintext.
+3. Every policy activation is tenant-scoped, role-gated, and audited.
+4. Meter batches are derived from the authoritative event ledger.
+5. External provider outages do not erase internal financial state.
 
-## Production topology
+## Live hackathon deployment
 
 ```mermaid
-flowchart TB
-    subgraph Client["Customer environment"]
-      SDK["Finference SDK"]
-      OTEL["OpenTelemetry collector"]
-    end
-    subgraph Edge["Regional ingestion"]
-      WAF["WAF + rate limits"]
-      AUTH["HMAC verification"]
-      DEDUPE["Idempotency cache"]
-    end
-    subgraph Data["Economic data plane"]
-      KAFKA["Partitioned event stream"]
-      OLTP["PostgreSQL ledger"]
-      OLAP["ClickHouse margin mart"]
-      OBJ["Encrypted object archive"]
-    end
-    subgraph Control["Policy control plane"]
-      BB["Backboard agent + memory"]
-      SIM["Historical simulator"]
-      APPROVE["RBAC approval"]
-      ROUTER["Routing policy service"]
-      WATCH["Quality watchdog"]
-    end
-    subgraph Revenue["Revenue plane"]
-      METER["Usage aggregator"]
-      STRIPE["Stripe meters + subscriptions"]
-    end
-
-    SDK --> WAF
-    OTEL --> WAF
-    WAF --> AUTH --> DEDUPE --> KAFKA
-    KAFKA --> OLTP
-    KAFKA --> OLAP
-    KAFKA --> OBJ
-    OLAP --> BB --> SIM --> APPROVE --> ROUTER
-    ROUTER --> WATCH
-    WATCH -->|automatic rollback| ROUTER
-    OLTP --> METER --> STRIPE
+flowchart LR
+    USER["Authenticated operator"] --> AUTH["Neon Auth"]
+    SDK["Customer SDK / test event"] --> INGEST["Next.js ingestion API"]
+    AUTH --> APP["Finference control plane"]
+    INGEST --> VERIFY["API-key or HMAC verification"]
+    VERIFY --> LIMIT["Postgres rate-limit bucket"]
+    LIMIT --> LEDGER["Neon usage-event ledger"]
+    APP --> POLICY["Routing policies + approval gate"]
+    APP --> AUDIT["Append-oriented audit evidence"]
+    APP --> METER["Durable meter flushes"]
+    POLICY --> DB["Neon Postgres"]
+    AUDIT --> DB
+    METER --> DB
+    METER -. "when credentialed" .-> STRIPE["Stripe Billing Meter"]
+    APP -. "when credentialed" .-> BB["Backboard thread + memory"]
 ```
 
-## Data partitioning and indexing
+The public `/dashboard` route is a credential-free tour. The protected `/app`
+route uses real Neon Auth sessions and real Postgres state. Policy approval,
+API-key creation, event ingestion, audit entries, and meter aggregation survive
+reloads and deployments.
 
-- Event stream partition: `workspace_id`, preserving tenant-local ordering.
-- Ledger primary key: `(workspace_id, event_id)`.
-- Idempotency unique index: `(workspace_id, idempotency_key)`.
-- Time-series covering index:
-  `(workspace_id, occurred_at desc) include (feature, customer_id, model, cost_usd, revenue_usd)`.
-- Materializations: hourly and daily rollups by workspace, customer, feature,
-  provider, model, and route policy.
-- Large deployments move analytical scans to ClickHouse while PostgreSQL
-  remains the authoritative financial ledger.
+## Tenant and data model
 
-## Backboard integration
+Every business record carries a `workspace_id` foreign key. Membership is a
+composite `(workspace_id, user_id)` key with owner, admin, analyst, and viewer
+roles.
 
-The live adapter calls `POST https://app.backboard.io/api/threads/messages`
-with memory enabled. Persistent memory captures:
+Core tables:
 
-- accepted quality floors by feature,
-- customer SLA exceptions,
-- operator risk preferences,
-- prior rejected policies and reasons,
-- rollback outcomes.
+| Table | Purpose |
+| --- | --- |
+| `workspaces` | Tenant, plan, provider bindings, target margin |
+| `workspace_members` | Tenant membership and role |
+| `workspace_api_keys` | SHA-256 key digest, visible prefix, revocation state |
+| `usage_events` | Authoritative cost/revenue/token/latency ledger |
+| `routing_policies` | Evidence, rollback predicates, approver, lifecycle |
+| `audit_log` | Actor, action, target, status, and evidence |
+| `meter_flushes` | Watermarked usage aggregation and Stripe state |
+| `webhook_events` | Durable, replay-safe provider webhook ledger |
+| `rate_limit_buckets` | Per-credential fixed-window request counts |
 
-Backboard is not placed in the request-serving hot path. If it is unavailable,
-event ingestion and production routing continue; only new recommendation
-generation pauses.
+## Indexing and concurrency
+
+- Unique event identity: `(workspace_id, external_event_id)`.
+- Unique idempotency identity: `(workspace_id, idempotency_key)`.
+- Tenant/time access: `(workspace_id, occurred_at)`.
+- Tenant dimensions: `(workspace_id, feature)` and
+  `(workspace_id, customer_id)`.
+- Policy lookup: `(workspace_id, status)`.
+- Meter idempotency: `(workspace_id, source_watermark)`.
+- API-key lookup: globally unique SHA-256 digest.
+- Webhook identity: provider event ID primary key.
+
+Concurrent event deliveries use database uniqueness as the final authority.
+Policy activation updates only a still-`proposed` record. Webhooks are claimed
+atomically before processing, and failed claims are released for provider
+retry. Meter flushes use the last included event as a deterministic watermark.
+
+## Ingestion boundary
+
+The ingestion API accepts either:
+
+1. a generated workspace API key, stored only as a SHA-256 digest; or
+2. an HMAC-SHA256 signature over the exact body plus a workspace slug.
+
+The API applies bounded Zod validation, tenant resolution, a durable rate-limit
+bucket, and idempotent insertion. Prompt and completion bodies are not part of
+the contract.
+
+## Policy governance
+
+The persisted policy state machine allows controlled transitions such as
+`proposed -> active -> rolled_back`. Repeat activation and resurrection of
+terminal policies are rejected. Only workspace owners and admins can activate
+policies or submit billing meters.
+
+Each policy stores:
+
+- feature, source model, destination model, and traffic share;
+- quality floor and expected margin lift;
+- simulation sample, quality, latency, and escalation evidence;
+- deterministic rollback conditions;
+- approver and activation timestamps.
 
 ## Billing
 
-Meter aggregation runs from the authoritative ledger rather than browser state
-or provider webhooks. Each meter flush records:
+Finference creates Stripe products, monthly prices, a Billing Meter, Checkout
+sessions, and signed webhook handling when Stripe credentials are configured.
+Internal meter aggregation works independently:
 
-- source event watermark,
-- aggregate unit count,
-- Stripe meter event ID,
-- retry count and terminal state.
+1. read new billable ledger events after the previous period watermark;
+2. aggregate tokens into economic units;
+3. persist a unique meter flush;
+4. submit the same flush ID as the Stripe meter-event identifier;
+5. retain pending/failed state for retry and reconciliation.
 
-Retries are idempotent. Reconciliation compares internal billable units with
-Stripe meter summaries before invoice finalization.
+The hosted deployment currently reports Stripe as `adapter-ready` because no
+external Stripe credential is installed. It does not claim a simulated charge.
 
-## Failure modes
+## Backboard integration
 
-| Failure | Behavior |
-| --- | --- |
-| Provider API unavailable | Existing route fallback chain activates |
-| Backboard unavailable | Recommendations pause; ingestion continues |
-| Stripe unavailable | Meter batches remain durable and retry with backoff |
-| Duplicate SDK delivery | Unique idempotency key returns accepted duplicate |
-| Quality regression | Watchdog rolls back the policy version |
-| Analytics lag | Control plane shows stale watermark and blocks approval |
-| Database region loss | Stream replay rebuilds projections in standby region |
+The adapter creates or reuses a workspace-bound Backboard assistant and thread,
+then sends margin context with memory enabled. Backboard is outside the
+request-serving ingestion path, so its absence pauses live agent calls but does
+not affect ledger writes, policy approval, or billing aggregation.
 
-## Deployment evolution
+The hosted deployment currently reports Backboard as `adapter-ready` because no
+Backboard account key is installed.
 
-The hackathon deployment is a complete vertical slice with in-process demo
-state. The interfaces are intentionally separated so PostgreSQL, Redis,
-ClickHouse, and Kafka adapters can replace the demo implementations without
-changing product components or economic calculations.
+## Scale-out path
 
+The current Neon architecture is sufficient for the demonstrated workload and
+keeps financial state strongly consistent. At higher volume:
+
+- place a partitioned event stream between ingestion and storage;
+- archive raw events to object storage;
+- materialize high-cardinality analytics in ClickHouse;
+- retain Postgres as the control-plane and billing authority;
+- use regional ingestion with workspace-affine ordering;
+- add quality evaluators and a runtime policy distribution service.
+
+These are explicit growth steps, not claims about the current deployment.

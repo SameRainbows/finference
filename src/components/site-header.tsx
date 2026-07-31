@@ -21,13 +21,21 @@ export function SiteHeader() {
             Pricing
           </Link>
         </nav>
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1.5 rounded-full bg-[#c9ff3f] px-4 py-2 text-xs font-semibold text-[#10130e]"
-        >
-          Live demo
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/auth/sign-in"
+            className="hidden px-3 py-2 text-xs text-white/45 hover:text-white/70 sm:block"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1.5 rounded-full bg-[#c9ff3f] px-4 py-2 text-xs font-semibold text-[#10130e]"
+          >
+            Live demo
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
     </header>
   );

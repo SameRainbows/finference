@@ -24,6 +24,7 @@ import {
   Gauge,
   KeyRound,
   LayoutDashboard,
+  LoaderCircle,
   Menu,
   Play,
   RotateCcw,
@@ -44,6 +45,7 @@ import {
 } from "@/lib/demo-data";
 import { applyPolicy, summarize } from "@/lib/finops";
 import { compact, money } from "@/lib/utils";
+import { projectMargin } from "@/lib/metering";
 import { Logo } from "@/components/logo";
 import { MarginChart } from "@/components/margin-chart";
 
@@ -67,14 +69,69 @@ const sampleEvent = `await finference.track({
   revenueUsd: 0.049
 });`;
 
-export function Dashboard() {
-  const [policyApplied, setPolicyApplied] = useState(false);
-  const [agentOpen, setAgentOpen] = useState(true);
+type ActivityItem = {
+  time: string;
+  actor: string;
+  action: string;
+  target: string;
+  status: string;
+};
+
+type DashboardProps = {
+  mode?: "demo" | "persistent";
+  workspaceName?: string;
+  userName?: string;
+  initialPolicyApplied?: boolean;
+  policyId?: string;
+  initialMetrics?: {
+    revenue: number;
+    cost: number;
+    requests: number;
+    errorRate: number;
+    p95LatencyMs: number;
+  };
+  initialAudit?: ActivityItem[];
+  initialMeter?: {
+    eventCount: number;
+    billableUnits: number;
+    status: string;
+  } | null;
+  integrations?: {
+    database: "live";
+    auth: "live";
+    backboard: "live" | "ready";
+    stripe: "live" | "ready";
+  };
+};
+
+export function Dashboard({
+  mode = "demo",
+  workspaceName = "Aurora Labs",
+  userName = "Maya Chen",
+  initialPolicyApplied = false,
+  policyId,
+  initialMetrics,
+  initialAudit,
+  initialMeter,
+  integrations,
+}: DashboardProps = {}) {
+  const persistent = mode === "persistent";
+  const [policyApplied, setPolicyApplied] = useState(initialPolicyApplied);
+  const [agentOpen, setAgentOpen] = useState(!persistent);
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [range, setRange] = useState("30 days");
   const [activeNav, setActiveNav] = useState("Overview");
   const [simulating, setSimulating] = useState(false);
+  const [newApiKey, setNewApiKey] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
+  const [activity, setActivity] = useState<ActivityItem[]>(
+    persistent && initialAudit?.length ? initialAudit : auditEvents,
+  );
+  const [ledgerRows, setLedgerRows] = useState(
+    initialMetrics?.requests ?? usageEvents.length,
+  );
+  const [meterBatch, setMeterBatch] = useState(initialMeter ?? null);
 
   const currentEvents = useMemo(
     () =>
@@ -85,9 +142,16 @@ export function Dashboard() {
   );
   const snapshot = useMemo(() => summarize(currentEvents), [currentEvents]);
   const baseline = useMemo(() => summarize(usageEvents), []);
-  const displayMargin = policyApplied ? 61.8 : 52;
-  const displayCost = policyApplied ? 14290 : 17154;
-  const displayProfit = policyApplied ? 17613 : 14749;
+  const displayRevenue = initialMetrics?.revenue ?? 28_500;
+  const baselineCost = initialMetrics?.cost ?? 13_751;
+  const economics = projectMargin({
+    revenue: displayRevenue,
+    cost: baselineCost,
+    savings: policyApplied ? recommendedPolicy.expectedMonthlySavings : 0,
+  });
+  const displayCost = economics.cost;
+  const displayProfit = economics.grossProfit;
+  const displayMargin = economics.grossMargin;
 
   function notify(message: string) {
     setToast(message);
@@ -96,16 +160,112 @@ export function Dashboard() {
 
   function runSimulation() {
     setSimulating(true);
+    if (persistent) {
+      void fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentMargin: displayMargin,
+          targetMargin: 60,
+          expensiveModel: recommendedPolicy.fromModel,
+          candidateModel: recommendedPolicy.toModel,
+          expectedSavings: recommendedPolicy.expectedMonthlySavings,
+        }),
+      })
+        .then(async (response) => {
+          const result = (await response.json()) as {
+            mode?: string;
+            error?: string;
+          };
+          notify(
+            response.ok
+              ? `Agent analysis complete · ${result.mode === "live" ? "Backboard memory persisted" : "deterministic fallback"}`
+              : result.error ?? "Agent analysis failed",
+          );
+        })
+        .finally(() => setSimulating(false));
+      return;
+    }
     window.setTimeout(() => {
       setSimulating(false);
       notify("Simulation complete · 94.8% quality retained");
     }, 1150);
   }
 
-  function approvePolicy() {
-    setPolicyApplied(true);
-    setAgentOpen(false);
-    notify("Policy deployed to 72% of eligible traffic");
+  async function approvePolicy() {
+    if (approving) return;
+    setApproving(true);
+    try {
+      if (persistent) {
+        const response = await fetch("/api/app/policies/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ policyId }),
+        });
+        if (!response.ok) {
+          const result = (await response.json()) as { error?: string };
+          throw new Error(result.error ?? "Policy approval failed");
+        }
+      }
+      setPolicyApplied(true);
+      setActivity((current) => [
+        {
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          actor: userName,
+          action: "Approved and activated routing policy",
+          target: "Support copilot · 72%",
+          status: "verified",
+        },
+        ...current,
+      ]);
+      setAgentOpen(false);
+      notify(
+        persistent
+          ? "Policy persisted and activated in Neon Postgres"
+          : "Policy deployed to 72% of eligible traffic",
+      );
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Policy approval failed");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  async function createApiKey() {
+    if (!persistent) {
+      notify("API-key creation is available in the persistent workspace");
+      return;
+    }
+    const response = await fetch("/api/app/api-keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Judge integration" }),
+    });
+    const result = (await response.json()) as { key?: string; error?: string };
+    if (!response.ok || !result.key) {
+      notify(result.error ?? "Unable to create API key");
+      return;
+    }
+    setNewApiKey(result.key);
+    setActivity((current) => [
+      {
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+        actor: userName,
+        action: "Created ingestion API key",
+        target: "Judge integration",
+        status: "verified",
+      },
+      ...current,
+    ]);
+    notify("A live ingestion key was created and stored as a SHA-256 hash");
   }
 
   return (
@@ -122,7 +282,7 @@ export function Dashboard() {
                   A
                 </div>
                 <div>
-                  <div className="text-xs font-medium">Aurora Labs</div>
+                  <div className="text-xs font-medium">{workspaceName}</div>
                   <div className="mt-0.5 text-[9px] text-white/30">
                     Scale plan
                   </div>
@@ -175,7 +335,11 @@ export function Dashboard() {
               ].map(({ label, icon: Icon }) => (
                 <button
                   key={label}
-                  onClick={() => notify(`${label} settings are demo-safe`)}
+                  onClick={() =>
+                    label === "API keys"
+                      ? void createApiKey()
+                      : notify(`${label} settings are demo-safe`)
+                  }
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-white/38 transition hover:bg-white/[0.035] hover:text-white/70"
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -248,10 +412,12 @@ export function Dashboard() {
               <div>
                 <div className="text-sm font-medium">{activeNav}</div>
                 <div className="mt-0.5 hidden items-center gap-1.5 text-[10px] text-white/27 sm:flex">
-                  Interactive demo
+                  {persistent ? "Authenticated workspace" : "Interactive demo"}
                   <span>·</span>
                   <span className="text-[#c9ff3f]">
-                    seeded dataset · APIs available
+                    {persistent
+                      ? "Neon persistence active"
+                      : "seeded dataset · APIs available"}
                   </span>
                 </div>
               </div>
@@ -288,14 +454,17 @@ export function Dashboard() {
                   Live economic telemetry
                 </div>
                 <h1 className="mt-2 text-2xl font-medium tracking-[-0.035em] sm:text-3xl">
-                  Good afternoon, Maya.
+                  Good afternoon, {userName.split(" ")[0]}.
                 </h1>
                 <p className="mt-1.5 text-xs text-white/34">
                   Your AI margin is{" "}
                   <span className="text-[#c9ff3f]">
                     {policyApplied ? "protected" : "exposed"}
                   </span>
-                  . One optimization is ready for review.
+                  .{" "}
+                  {policyApplied
+                    ? "The active policy is being monitored."
+                    : "One optimization is ready for review."}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -324,7 +493,7 @@ export function Dashboard() {
               {[
                 {
                   label: "AI revenue",
-                  value: "$28,500",
+                  value: money(displayRevenue),
                   delta: "+18.4%",
                   note: "vs. prior period",
                   positive: true,
@@ -644,10 +813,15 @@ export function Dashboard() {
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-2">
                   {[
-                    ["Events", "527.6k"],
+                    [persistent ? "Ledger rows" : "Events", compact(ledgerRows)],
                     ["Accuracy", "99.98%"],
-                    ["Lag", "1.2s"],
-                    ["Unbilled", "$0.00"],
+                    [
+                      "Meter batch",
+                      meterBatch
+                        ? `${compact(meterBatch.billableUnits)} units`
+                        : "Not flushed",
+                    ],
+                    ["Status", meterBatch?.status ?? "Ready"],
                   ].map(([label, value]) => (
                     <div
                       key={label}
@@ -666,12 +840,67 @@ export function Dashboard() {
                   idempotency: verified
                 </div>
                 <button
-                  onClick={() => notify("Test event ingested · evt_demo_001")}
+                      onClick={async () => {
+                        if (!persistent) {
+                          notify("Test event ingested · evt_demo_001");
+                          return;
+                        }
+                        const response = await fetch("/api/app/events/test", {
+                          method: "POST",
+                        });
+                        const result = (await response.json()) as {
+                          eventId?: string;
+                          error?: string;
+                        };
+                        notify(
+                          response.ok
+                            ? `Durable event ingested · ${result.eventId}`
+                            : result.error ?? "Event ingestion failed",
+                        );
+                        if (response.ok) setLedgerRows((count) => count + 1);
+                      }}
                   className="mt-4 flex items-center gap-1.5 text-[10px] text-[#55e8cf]"
                 >
                   <Play className="h-3 w-3" />
                   Send test event
                 </button>
+                {persistent && (
+                  <button
+                    onClick={async () => {
+                      const response = await fetch("/api/app/billing/flush", {
+                        method: "POST",
+                      });
+                      const result = (await response.json()) as {
+                        mode?: string;
+                        error?: string;
+                        flush?: {
+                          eventCount?: number;
+                          billableUnits?: number;
+                          status?: string;
+                        };
+                      };
+                      notify(
+                        response.ok
+                          ? `${result.flush?.billableUnits ?? 0} units aggregated · ${result.mode ?? result.flush?.status}`
+                          : result.error ?? "Meter flush failed",
+                      );
+                      if (response.ok && result.flush) {
+                        setMeterBatch({
+                          eventCount: result.flush.eventCount ?? 0,
+                          billableUnits: result.flush.billableUnits ?? 0,
+                          status:
+                            result.mode === "adapter-ready"
+                              ? "adapter-ready"
+                              : result.flush.status ?? "pending",
+                        });
+                      }
+                    }}
+                    className="ml-4 mt-4 inline-flex items-center gap-1.5 text-[10px] text-[#c9ff3f]"
+                  >
+                    <CircleDollarSign className="h-3 w-3" />
+                    Flush usage meter
+                  </button>
+                )}
               </section>
             </div>
 
@@ -708,21 +937,7 @@ export function Dashboard() {
                   <ShieldCheck className="h-4 w-4 text-[#55e8cf]" />
                 </div>
                 <div>
-                  {(policyApplied
-                    ? [
-                        {
-                          time: new Date().toLocaleTimeString([], {
-                            hour12: false,
-                          }),
-                          actor: "Maya Chen",
-                          action: "Approved routing policy",
-                          target: "Support copilot · 72%",
-                          status: "verified",
-                        },
-                        ...auditEvents,
-                      ]
-                    : auditEvents
-                  )
+                  {activity
                     .slice(0, 4)
                     .map((event) => (
                       <div
@@ -775,7 +990,9 @@ export function Dashboard() {
                   <div className="text-sm font-medium">Margin agent</div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-white/28">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#c9ff3f]" />
-                    Backboard adapter · demo memory
+                    {integrations?.backboard === "live"
+                      ? "Backboard persistent memory live"
+                      : "Backboard adapter ready"}
                   </div>
                 </div>
               </div>
@@ -948,8 +1165,12 @@ export function Dashboard() {
                     onClick={approvePolicy}
                     className="flex h-11 items-center justify-center gap-2 rounded-lg bg-[#c9ff3f] text-xs font-semibold text-[#10130e] hover:bg-[#d7ff70]"
                   >
-                    <Zap className="h-3.5 w-3.5" />
-                    Approve & deploy policy
+                    {approving ? (
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Zap className="h-3.5 w-3.5" />
+                    )}
+                    {approving ? "Persisting policy..." : "Approve & deploy policy"}
                   </button>
                 </div>
               )}
@@ -962,6 +1183,39 @@ export function Dashboard() {
         <div className="fixed bottom-5 left-1/2 z-[70] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-[#151b1e] px-4 py-2.5 text-[11px] text-white/72 shadow-2xl">
           <CheckCircle2 className="h-3.5 w-3.5 text-[#c9ff3f]" />
           {toast}
+        </div>
+      )}
+
+      {newApiKey && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-[#c9ff3f]/18 bg-[#0c1013] p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">Live ingestion key</div>
+                <div className="mt-1 text-[10px] text-white/30">
+                  Shown once. Only its SHA-256 hash is persisted.
+                </div>
+              </div>
+              <button
+                aria-label="Close API key"
+                onClick={() => setNewApiKey(null)}
+              >
+                <X className="h-4 w-4 text-white/40" />
+              </button>
+            </div>
+            <code className="mt-5 block overflow-x-auto rounded-lg border border-white/8 bg-black/25 p-4 text-xs text-[#d7ff70]">
+              {newApiKey}
+            </code>
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(newApiKey);
+                notify("API key copied");
+              }}
+              className="mt-4 h-10 w-full rounded-lg bg-[#c9ff3f] text-xs font-semibold text-[#10130e]"
+            >
+              Copy key
+            </button>
+          </div>
         </div>
       )}
 

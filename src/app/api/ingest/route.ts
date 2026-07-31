@@ -1,79 +1,139 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  authenticateWorkspaceApiKey,
+  consumeRateLimit,
+  insertUsageEvent,
+  resolveWorkspaceBySlug,
+} from "@/db/services";
+import { verifyHmacSha256 } from "@/lib/security";
 
 const eventSchema = z.object({
   eventId: z.string().min(6).max(128),
   occurredAt: z.iso.datetime(),
-  workspaceId: z.string().min(3).max(128),
+  workspaceSlug: z.string().min(3).max(80).optional(),
   customerId: z.string().min(3).max(128),
   feature: z.string().min(1).max(120),
   provider: z.string().min(1).max(80),
   model: z.string().min(1).max(120),
-  inputTokens: z.number().int().nonnegative(),
-  outputTokens: z.number().int().nonnegative(),
-  latencyMs: z.number().int().nonnegative(),
-  costUsd: z.number().nonnegative(),
-  revenueUsd: z.number().nonnegative(),
+  inputTokens: z.number().int().nonnegative().max(20_000_000),
+  outputTokens: z.number().int().nonnegative().max(20_000_000),
+  latencyMs: z.number().int().nonnegative().max(3_600_000),
+  costUsd: z.number().nonnegative().max(1_000_000),
+  revenueUsd: z.number().nonnegative().max(1_000_000),
   status: z.enum(["ok", "error"]).default("ok"),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const globalStore = globalThis as typeof globalThis & {
-  finferenceIdempotency?: Map<string, number>;
-};
-
-const idempotency = (globalStore.finferenceIdempotency ??= new Map());
-
 function validSignature(body: string, signature: string | null) {
-  const secret = process.env.FINFERENCE_INGEST_SECRET;
-  if (!secret) return process.env.NODE_ENV !== "production";
-  if (!signature?.startsWith("sha256=")) return false;
-
-  const expected = `sha256=${createHmac("sha256", secret)
-    .update(body)
-    .digest("hex")}`;
-  const receivedBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-  return (
-    receivedBuffer.length === expectedBuffer.length &&
-    timingSafeEqual(receivedBuffer, expectedBuffer)
+  return verifyHmacSha256(
+    body,
+    signature,
+    process.env.FINFERENCE_INGEST_SECRET,
   );
+}
+
+function extractApiKey(request: Request) {
+  const explicit = request.headers.get("x-finference-key");
+  if (explicit) return explicit;
+  const authorization = request.headers.get("authorization");
+  if (authorization?.startsWith("Bearer ")) {
+    return authorization.slice("Bearer ".length);
+  }
+  return null;
 }
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  if (!validSignature(rawBody, request.headers.get("x-finference-signature"))) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-  }
 
   try {
     const event = eventSchema.parse(JSON.parse(rawBody));
-    const idempotencyKey =
-      request.headers.get("idempotency-key") ?? event.eventId;
+    const apiKey = extractApiKey(request);
+    const apiKeyRecord = apiKey
+      ? await authenticateWorkspaceApiKey(apiKey)
+      : null;
 
-    if (idempotency.has(idempotencyKey)) {
+    let workspaceId = apiKeyRecord?.workspaceId ?? null;
+    if (!workspaceId && validSignature(
+      rawBody,
+      request.headers.get("x-finference-signature"),
+    )) {
+      const workspace = event.workspaceSlug
+        ? await resolveWorkspaceBySlug(event.workspaceSlug)
+        : null;
+      workspaceId = workspace?.id ?? null;
+    }
+
+    if (!workspaceId) {
       return NextResponse.json(
-        { accepted: true, duplicate: true, eventId: event.eventId },
-        { status: 200 },
+        {
+          error:
+            "Authentication failed. Use a workspace API key or a valid HMAC signature and workspaceSlug.",
+        },
+        { status: 401 },
       );
     }
 
-    idempotency.set(idempotencyKey, Date.now());
-    if (idempotency.size > 5_000) {
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-      for (const [key, timestamp] of idempotency) {
-        if (timestamp < cutoff) idempotency.delete(key);
-      }
+    const rateLimit = await consumeRateLimit(
+      apiKeyRecord ? `api-key:${apiKeyRecord.id}` : `hmac:${workspaceId}`,
+    );
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded", resetAt: rateLimit.resetAt },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.max(
+                1,
+                Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1_000),
+              ),
+            ),
+            "X-RateLimit-Limit": String(rateLimit.limit),
+            "X-RateLimit-Remaining": "0",
+          },
+        },
+      );
     }
+
+    const idempotencyKey =
+      request.headers.get("idempotency-key") ?? event.eventId;
+    const persisted = await insertUsageEvent({
+      workspaceId,
+      externalEventId: event.eventId,
+      idempotencyKey,
+      occurredAt: new Date(event.occurredAt),
+      customerId: event.customerId,
+      feature: event.feature,
+      provider: event.provider,
+      model: event.model,
+      inputTokens: event.inputTokens,
+      outputTokens: event.outputTokens,
+      latencyMs: event.latencyMs,
+      costUsd: event.costUsd,
+      revenueUsd: event.revenueUsd,
+      status: event.status,
+      metadata: {
+        ...event.metadata,
+        authenticatedBy: apiKeyRecord ? "workspace-api-key" : "hmac",
+      },
+    });
 
     return NextResponse.json(
       {
         accepted: true,
-        duplicate: false,
+        duplicate: persisted.duplicate,
         eventId: event.eventId,
+        persistedId: persisted.id,
         normalizedAt: new Date().toISOString(),
       },
-      { status: 202 },
+      {
+        status: persisted.duplicate ? 200 : 202,
+        headers: {
+          "X-RateLimit-Limit": String(rateLimit.limit),
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+        },
+      },
     );
   } catch (error) {
     return NextResponse.json(
@@ -85,4 +145,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

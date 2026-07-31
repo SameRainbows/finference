@@ -33,8 +33,8 @@ Finference closes this loop in real time.
    customer into a signed economic event.
 2. **Diagnose** — Calculate contribution margin at model, feature, customer,
    and workspace level.
-3. **Recommend** — Use a Backboard-powered agent with persistent memory to
-   propose routing changes.
+3. **Recommend** — Use a persistent workspace thread and the Backboard adapter
+   (when credentialed) to propose routing changes.
 4. **Simulate** — Replay historical traffic and enforce quality, latency, and
    error-rate floors.
 5. **Approve** — Require a human decision with bounded blast radius and
@@ -44,16 +44,18 @@ Finference closes this loop in real time.
 
 ## Live demo path
 
-The demo is intentionally preloaded so judges can evaluate the core workflow
-without creating an account or supplying API keys.
+Two evaluation paths are available:
 
-1. Open `/dashboard`.
-2. Review the 52% gross margin and the agent’s $2,864/month opportunity.
-3. Inspect the offline simulation, quality floor, persistent-memory evidence,
-   and rollback conditions.
-4. Click **Approve & deploy policy**.
-5. Watch cost fall, margin rise to 61.8%, model economics update, and a new
-   immutable audit entry appear.
+1. `/dashboard` is a credential-free product tour.
+2. `/auth/sign-in` offers one-click judge access to a real authenticated
+   workspace backed by Neon Postgres.
+3. In `/app`, approve a proposed policy, reload to prove persistence, create a
+   hashed ingestion API key, ingest a durable test event, and aggregate a meter
+   batch.
+4. Use **Reset judge workspace** to restore the repeatable evaluation scenario.
+5. Review the $2,864/month opportunity: baseline cost is $13,751 on $28,500
+   revenue (51.8% margin); the protected route lowers cost to $10,887 and raises
+   margin to 61.8%.
 
 ## Architecture
 
@@ -74,17 +76,31 @@ flowchart LR
     GATE --> AUDIT["Immutable audit evidence"]
 ```
 
-The repository contains a deployable vertical slice of this architecture:
+The repository contains a deployable production MVP of this architecture:
 
 - Next.js control plane and public product surface
+- Managed Neon Auth sessions and tenant-scoped workspaces
+- Neon Postgres ledger, policies, API keys, audit evidence, meters, and webhooks
 - Strictly validated, HMAC-authenticated ingestion endpoint
-- Idempotency/replay protection
+- Hashed workspace API keys, persistent rate limits, and idempotency protection
 - Provider-neutral economic event model
 - Deterministic policy simulator and unit-economics engine
-- Backboard REST adapter with persistent-memory mode and a no-key demo fallback
-- Stripe Checkout adapter with test-mode support and a safe demo fallback
-- Responsive, interactive approval and rollback workflow
-- Unit tests for financial calculations and policy behavior
+- Backboard REST adapter with durable workspace thread bindings
+- Stripe Checkout, Billing Meter, webhook, and durable meter-flush adapters
+- RBAC-gated policy approval with atomic state transitions
+- Unit tests for finance, metering, signatures, rate limits, and policy states
+
+### Deployment truth table
+
+| Capability | Hosted status |
+| --- | --- |
+| Neon Postgres ledger | **Live** |
+| Neon Auth + persistent sessions | **Live** |
+| Workspace/API-key ingestion | **Live** |
+| Policy approval + audit evidence | **Live** |
+| Durable usage-meter aggregation | **Live** |
+| Backboard external calls | Adapter-ready; requires a Backboard account key |
+| Stripe Checkout/meter submission | Adapter-ready; requires Stripe credentials |
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for scaling, storage, and
 failure-mode details.
@@ -118,9 +134,11 @@ prompts, completions, emails, or end-user PII.
 | --- | --- | --- |
 | Web/control plane | Next.js 16, React 19, TypeScript | Server routes, static product pages, fast deployment |
 | Design | Tailwind CSS 4, Lucide, Recharts | Consistent system and responsive data visualization |
+| Database | Neon Postgres + Drizzle ORM | Durable multi-tenant economic ledger and indexed control-plane state |
+| Authentication | Neon Auth | Managed user sessions and protected workspace routes |
 | Validation | Zod | Boundary validation and explicit contracts |
-| Agent memory | Backboard API | Persistent preferences and cross-run decision context |
-| Billing | Stripe Checkout/Billing adapter | Subscription and usage-based monetization |
+| Agent memory | Backboard adapter | Persistent preferences and cross-run decision context when credentialed |
+| Billing | Stripe Checkout + Billing Meters | Subscription and usage-based monetization adapter |
 | Tests | Vitest + V8 coverage | Fast deterministic unit testing |
 | Deployment | Vercel | Edge delivery, server functions, preview deployments |
 
@@ -138,33 +156,42 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-All primary demo behavior works without external credentials. Add Backboard and
-Stripe test-mode keys in `.env.local` to activate the live adapters.
+The public tour works without credentials. The persistent app requires Neon
+Postgres/Auth. Backboard and Stripe credentials activate their external calls;
+without them, the app preserves durable state and reports `adapter-ready`
+instead of simulating a third-party success.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Production | Canonical deployment URL |
+| `DATABASE_URL` | Persistent app | Pooled Neon Postgres connection |
+| `DATABASE_URL_UNPOOLED` | Migrations | Direct Neon Postgres connection |
+| `NEON_AUTH_BASE_URL` | Persistent app | Managed Neon Auth endpoint |
+| `NEON_AUTH_COOKIE_SECRET` | Persistent app | Session cookie encryption |
 | `FINFERENCE_INGEST_SECRET` | Production | HMAC-SHA256 event authentication |
+| `DEMO_USER_EMAIL` | Optional | One-click judge account |
+| `DEMO_USER_PASSWORD` | Optional | Server-only judge credential |
 | `BACKBOARD_API_KEY` | Optional | Live persistent-memory margin agent |
 | `BACKBOARD_ASSISTANT_ID` | Optional | Reuse a configured FinOps assistant |
 | `BACKBOARD_LLM_PROVIDER` | Optional | Backboard model provider |
 | `BACKBOARD_MODEL_NAME` | Optional | Backboard model name |
 | `STRIPE_SECRET_KEY` | Optional | Stripe test/live API key |
-| `STRIPE_GROWTH_PRICE_ID` | Optional | Growth subscription price |
-| `STRIPE_SCALE_PRICE_ID` | Optional | Scale subscription price |
+| `STRIPE_WEBHOOK_SECRET` | Optional | Signed Stripe webhook verification |
 
 ## Verification
 
 ```bash
 npm run lint
-npm test
+npm run test:coverage
+npm run db:check
 npm run build
-
-# or all three
-npm run check
+npm audit
 ```
+
+The pure financial, metering, policy-state, and signature/rate-limit modules
+currently report 95%+ statement coverage with enforced CI thresholds.
 
 ## API examples
 
@@ -177,7 +204,7 @@ curl http://localhost:3000/api/health
 ### Signed ingestion
 
 ```bash
-BODY='{"eventId":"evt_demo_001","occurredAt":"2026-07-30T14:32:08.000Z","workspaceId":"ws_demo","customerId":"cus_demo","feature":"support_copilot","provider":"anthropic","model":"claude-sonnet-4.5","inputTokens":1000,"outputTokens":400,"latencyMs":940,"costUsd":0.021,"revenueUsd":0.049,"status":"ok"}'
+BODY='{"eventId":"evt_demo_001","occurredAt":"2026-07-30T14:32:08.000Z","workspaceSlug":"your-workspace-slug","customerId":"cus_demo","feature":"support_copilot","provider":"anthropic","model":"claude-sonnet-4.5","inputTokens":1000,"outputTokens":400,"latencyMs":940,"costUsd":0.021,"revenueUsd":0.049,"status":"ok"}'
 SIGNATURE="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$FINFERENCE_INGEST_SECRET" -hex | sed 's/^.* //')"
 curl -X POST http://localhost:3000/api/ingest \
   -H "Content-Type: application/json" \

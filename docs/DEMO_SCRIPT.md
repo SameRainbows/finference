@@ -1,68 +1,87 @@
-# 3-minute demo script
+# Finference demo script
 
-## 0:00–0:20 — Problem
+Target duration: 3:00–3:30.
 
-“AI SaaS teams see revenue immediately, but model costs arrive weeks later in a
-blended invoice. Growth can quietly destroy gross margin. Finference makes
-every inference economically accountable.”
+## 0:00–0:20 — Problem and promise
 
-Show the landing hero and the product preview.
+Show the landing page.
 
-## 0:20–0:45 — Live control plane
+> AI SaaS teams can see revenue today, but model costs arrive later in a
+> blended invoice. Finference is the margin control plane that connects every
+> inference to customer revenue, governs safer model routing, and converts the
+> same ledger into billable usage.
 
-Open the dashboard.
+## 0:20–0:42 — Real identity and persistence
 
-“This production-shaped workspace has $28,500 in AI revenue, but inference cost
-is growing faster. Gross margin has fallen to 52%, below the 60% target.”
+Open `/auth/sign-in`, click **Enter persistent judge workspace**, and land in
+`/app`.
 
-Point to the four headline metrics and the revenue/cost chart.
+> This is not a static concept page. The judge path creates a real Neon Auth
+> session and opens Aurora Labs, a tenant-isolated workspace persisted in Neon
+> Postgres.
 
-## 0:45–1:35 — Agent recommendation
+## 0:42–1:10 — Unit economics
 
-Open the Margin Agent panel.
+Show the headline metrics and chart.
 
-“Finference detected that most support turns are low-complexity. The agent uses
-Backboard persistent memory, so it remembers Aurora’s quality preferences and
-previously approved decisions across runs.”
+> Aurora has twenty-eight thousand five hundred dollars in AI revenue and
+> thirteen thousand seven hundred fifty-one dollars in inference cost: a
+> 51.8-percent margin, below its 60-percent target. Finference attributes that
+> gap to the support-copilot route rather than hiding it in a provider total.
 
-Show:
+## 1:10–1:42 — Evidence and governed activation
 
-- route from Claude Sonnet to Gemini Flash,
-- 72% bounded traffic share,
-- $2,864 monthly savings,
-- 94.8% simulated quality against a 94% floor,
-- latency and escalation precision,
-- automatic rollback conditions,
-- memory evidence.
+Show the recommendation, simulation evidence, quality floor, traffic share, and
+rollback conditions. Click **Approve & deploy policy**.
 
-“This is not a stateless API wrapper and not autonomous guesswork. The agent
-proposes; the human approves.”
+> The recommendation moves bounded low-complexity traffic to a cheaper model,
+> but only after replaying ninety-six thousand requests. Quality must remain
+> above 94 percent, latency must stay below fifteen hundred milliseconds, and
+> provider errors must remain below two percent. Only an owner or admin can
+> activate the atomic proposed-to-active transition.
 
-## 1:35–2:05 — Deploy
+## 1:42–2:02 — Persistence proof
 
-Click **Approve & deploy policy**.
+Reload `/app` and show the active policy and audit entry.
 
-“The policy is now live. Inference cost falls, gross margin rises to 61.8%, the
-model economics table updates, and the approval appears in the immutable audit
-trail.”
+> Reloading proves the change is durable. The approver, policy scope, quality
+> threshold, traffic share, and rollback predicates are retained as audit
+> evidence. Protected cost is ten thousand eight hundred eighty-seven dollars,
+> raising gross margin to 61.8 percent.
 
-Show the updated KPI cards, chart, model row, and toast.
+## 2:02–2:30 — API key and durable ingestion
 
-## 2:05–2:35 — Monetization and infrastructure
+Create an API key, briefly show the one-time key, then send a test event.
 
-Scroll to meter health and the SDK example.
+> Operators can issue a workspace ingestion key. The plaintext appears once;
+> only its SHA-256 digest and prefix are stored. This test request passes schema
+> validation, persistent rate limiting, and database idempotency before joining
+> the authoritative economic ledger.
 
-“Every request is a signed, idempotent economic event. The same ledger powers
-customer-level margin and Stripe usage billing. Production architecture
-partitions by tenant, keeps an append-only financial ledger, and isolates the
-agent from the serving hot path.”
+## 2:30–2:55 — Billing meter
 
-Open `/security` briefly, then `/pricing`.
+Click the meter flush action and show the persisted batch.
 
-## 2:35–3:00 — Close
+> Finference aggregates new ledger events into economic units using a
+> deterministic source watermark. The batch remains durable even if Stripe is
+> unavailable, and the same flush ID becomes the replay-safe Stripe meter-event
+> identifier when credentials are installed.
 
-“Finference lets AI products observe, optimize, govern, and bill every
-inference—so growth improves margin instead of quietly destroying it.”
+## 2:55–3:18 — Architecture and honest provider status
 
-Return to the hero: **Your AI product should make money.**
+Show the integration status and optionally the repository architecture.
 
+> Neon database and authentication are live. The repository also implements
+> Backboard workspace threads with memory and Stripe Checkout, Billing Meters,
+> signed webhooks, and provisioning. Those external adapters are reported
+> honestly as adapter-ready until their account credentials are installed.
+
+## 3:18–3:30 — Close
+
+Return to the dashboard.
+
+> Finference turns AI cost from a delayed surprise into a governed,
+> revenue-aware operating loop: observe, optimize, approve, and bill.
+
+After recording, click **Reset judge workspace** so every evaluator starts from
+the same proposed-policy state.

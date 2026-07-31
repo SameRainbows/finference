@@ -4,6 +4,8 @@ type MarginAgentInput = {
   expensiveModel: string;
   candidateModel: string;
   expectedSavings: number;
+  threadId?: string | null;
+  assistantId?: string | null;
 };
 
 type BackboardResponse = {
@@ -34,7 +36,9 @@ export async function runMarginAgent(input: MarginAgentInput) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        assistant_id: process.env.BACKBOARD_ASSISTANT_ID,
+        assistant_id:
+          input.assistantId ?? process.env.BACKBOARD_ASSISTANT_ID ?? undefined,
+        thread_id: input.threadId ?? undefined,
         content: `Act as an AI FinOps analyst. Return a concise, auditable routing recommendation as JSON. Metrics: ${JSON.stringify(input)}`,
         llm_provider: process.env.BACKBOARD_LLM_PROVIDER ?? "openrouter",
         model_name:

@@ -39,6 +39,10 @@ yarn-error.log*
 
 # local QA artifacts
 /output
+/.playwright-cli
+/.agents
+/skills-lock.json
+/audit*.json
 /submission/raw-video
 /submission/frames
 /submission/*.wav

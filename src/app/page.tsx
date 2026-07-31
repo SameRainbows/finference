@@ -72,13 +72,21 @@ export default function Home() {
               Pricing
             </Link>
           </div>
-          <Link
-            href="/dashboard"
-            className="group flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium transition hover:border-white/25 hover:bg-white/[0.08]"
-          >
-            Open live demo
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/auth/sign-in"
+              className="hidden px-3 py-2 text-sm text-white/52 transition hover:text-white sm:block"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/dashboard"
+              className="group flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium transition hover:border-white/25 hover:bg-white/[0.08]"
+            >
+              Open live demo
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </nav>
 
         <div className="relative z-10 mx-auto max-w-7xl px-5 pb-18 pt-18 text-center lg:px-8 lg:pb-28 lg:pt-24">
@@ -109,6 +117,12 @@ export default function Home() {
             >
               See how it works
             </a>
+            <Link
+              href="/auth/sign-in"
+              className="flex h-12 items-center rounded-full px-4 text-sm font-medium text-[#55e8cf] transition hover:text-[#8cf6e3]"
+            >
+              Persistent workspace
+            </Link>
           </div>
 
           <div className="relative mx-auto mt-16 max-w-6xl text-left lg:mt-20">
@@ -181,7 +195,7 @@ export default function Home() {
                   <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {[
                       ["AI revenue", "$28,500", "+18.4%"],
-                      ["Inference cost", "$14,290", "-11.7%"],
+                      ["Inference cost", "$10,887", "-20.8%"],
                       ["Gross profit", "$17,613", "+31.2%"],
                       ["Meter accuracy", "99.98%", "healthy"],
                     ].map(([label, value, delta]) => (
@@ -300,6 +314,7 @@ export default function Home() {
             {providers.map((provider) => (
               <span key={provider}>{provider}</span>
             ))}
+            <span className="text-[#55e8cf]/55">NEON POSTGRES + AUTH</span>
           </div>
         </div>
       </section>
@@ -559,6 +574,9 @@ export default function Home() {
             </Link>
             <Link href="/demo" className="hover:text-white/60">
               Demo
+            </Link>
+            <Link href="/auth/sign-in" className="hover:text-white/60">
+              Workspace
             </Link>
             <a
               href="https://github.com/SameRainbows/finference"
