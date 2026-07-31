@@ -13,4 +13,3 @@ export async function requireSessionUser() {
   if (!user) throw new Error("UNAUTHENTICATED");
   return user;
 }
-

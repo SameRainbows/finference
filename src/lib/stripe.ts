@@ -92,4 +92,3 @@ export async function ensureStripeCatalog(
 
   return { meter, basePrice, meteredPrice };
 }
-

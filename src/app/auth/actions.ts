@@ -72,4 +72,3 @@ export async function signOut(): Promise<void> {
   await auth.signOut();
   redirect("/");
 }
-

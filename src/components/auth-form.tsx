@@ -94,4 +94,3 @@ export function AuthForm({
     </form>
   );
 }
-
